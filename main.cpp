@@ -3,7 +3,24 @@
 #include <vector>
 #include <cmath>
 #include "helper.h"
+#include "AudioFile.h"
 std::vector<float> main() {
+
+    //Load input file
+    AudioFile<float> audio_file;
+    audio_file.load("/Users/alanxie/projects/am_zephyr_sample_v1");
+    int inputFileSize = audio_file.samples[0].size();
+    audio_file.printSummary();
+
+    std::vector<float> input_wav_file = audio_file.samples[0];
+
+    //Load mapping file and normalize size to input file
+    audio_file.load("/Users/alanxie/projects/bf_alice_sample_v1");
+    std::vector<float> mapping_wav_file;
+    for (int i = 0; i < inputFileSize; ++i) {
+        mapping_wav_file.push_back(audio_file.samples[0][i]);
+    }
+
     int fft_size = 1024;
     int step_size = 256;
 
@@ -18,15 +35,13 @@ std::vector<float> main() {
     std::vector<std::vector<kiss_fft_cpx>> twod_fftmatrix_inputfile;
     std::vector<std::vector<kiss_fft_cpx>> twod_fftmatrix_mappingfile;
     std::vector<std::vector<kiss_fft_cpx>> mutated_spectrogram;
-
-    std::vector<float> input_wav_file(44100 * 3, 0.5f);
     //Instantiates a helper, undefined currently
     HelperClass helper;
 
     helper.stft_template(twod_fftmatrix_inputfile, forward_cfg, input_wav_file);
-    helper.stft_template(twod_fftmatrix_mappingfile, forward_cfg, input_wav_file);
+    helper.stft_template(twod_fftmatrix_mappingfile, forward_cfg, mapping_wav_file);
 
-    //just going to assume the components are the same length, ill gemini it later whatever
+    //Math for mapping and mutating
     for (int i = 0; i < twod_fftmatrix_inputfile.size(); ++i) {
         for (int j = 0; j < twod_fftmatrix_inputfile[i].size(); ++j) {
             double src_magnitude = std::sqrt(twod_fftmatrix_inputfile[i][j].r * twod_fftmatrix_inputfile[i][j].r + twod_fftmatrix_inputfile[i][j].i * twod_fftmatrix_inputfile[i][j].i);
@@ -51,7 +66,18 @@ std::vector<float> main() {
             output_audio[j + index_offset] = new_audio;
         }
     };
+    AudioFile<float>::AudioBuffer buffer;
+    buffer.resize(1);
+    buffer[0].resize(output_audio.size());
 
+    for (int j = 0; j < buffer[0].size(); ++j) {
+        float scaled_sample = output_audio[j] / 1.5f;
+        if (scaled_sample > 1.0f)  scaled_sample = 1.0f;
+        if (scaled_sample < -1.0f) scaled_sample = -1.0f;
 
+        buffer[0][j] = scaled_sample;
+    }
+    audio_file.setAudioBuffer(buffer);
+    audio_file.save ("/Users/alanxie/projects/newFile.wav");
     return output_audio;
 }
