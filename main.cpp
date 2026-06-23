@@ -26,7 +26,7 @@ int main() {
         if (i < mappingFileSize) {
         mapping_wav_file.push_back(audio_file2.samples[0][i]);
         } else {
-        mapping_wav_file.push_back(0.0f); // Pad with silence if mapping track is too short
+        mapping_wav_file.push_back(0.0f); 
     }
     }
 
@@ -40,28 +40,31 @@ int main() {
     kiss_fft_cfg inverse_cfg = kiss_fft_alloc(fft_size, 1, nullptr, nullptr);
 
     //initializing the 2d arrays
-    //they're 2d because of the nature of STFT...since it slides we have to take multiple ffts at once
     std::vector<std::vector<kiss_fft_cpx>> twod_fftmatrix_inputfile;
     std::vector<std::vector<kiss_fft_cpx>> twod_fftmatrix_mappingfile;
     std::vector<std::vector<kiss_fft_cpx>> mutated_spectrogram;
-    //Instantiates a helper, undefined currently
     HelperClass helper;
 
     helper.stft_template(twod_fftmatrix_inputfile, forward_cfg, input_wav_file);
     helper.stft_template(twod_fftmatrix_mappingfile, forward_cfg, mapping_wav_file);
+
+    //debug statements
     std::cout << "Input file vector size: " << input_wav_file.size() << std::endl;
     std::cout << "Input matrix rows: " << twod_fftmatrix_inputfile.size() << std::endl;
     if (!twod_fftmatrix_inputfile.empty()) {
         std::cout << "Input matrix cols: " << twod_fftmatrix_inputfile[0].size() << std::endl;
     }
     std::cout << "Total STFT frames analyzed: " << twod_fftmatrix_inputfile.size() << std::endl;
+
     mutated_spectrogram.resize(twod_fftmatrix_inputfile.size());
+
+
     for (int i = 0; i < twod_fftmatrix_inputfile.size(); ++i) {
-    // Match the inner size (number of frequency bins, which is fft_size)
         mutated_spectrogram[i].resize(twod_fftmatrix_inputfile[i].size());
     }
     std::vector<double> prev_input_phase(fft_size, 0.0);
     std::vector<double> prev_output_phase(fft_size, 0.0);
+
     //Math for mapping and mutating
     for (int i = 0; i < twod_fftmatrix_inputfile.size(); ++i) {
         for (int j = 0; j < twod_fftmatrix_inputfile[i].size(); ++j) {
@@ -94,6 +97,7 @@ int main() {
 
     //final output array
     std::vector<float> output_audio(inputFileSize);
+
     //buffer
     std::vector<kiss_fft_cpx> audio_buffer(fft_size);
 
@@ -116,6 +120,8 @@ int main() {
     if (output_audio.size() > 1000) {
     std::cout << "Sample 1000 value before scaling: " << output_audio[1000] << std::endl;
     }
+
+
     AudioFile<float> output_file;
     AudioFile<float>::AudioBuffer buffer;
     buffer.resize(1);
@@ -128,9 +134,9 @@ int main() {
 
         buffer[0][j] = scaled_sample;
     }
+
+
     output_file.setAudioBuffer(buffer);
-    output_file.setSampleRate(44100); // Manually force standard CD sample rate
-    output_file.setBitDepth(16);
     output_file.save ("/Users/alanxie/projects/newFile.wav");
     return 0;
 }
