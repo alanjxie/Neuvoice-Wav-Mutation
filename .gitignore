@@ -1,3 +1,5 @@
 kiss_fft.c
 kiss_fft.h
 AudioFile.h
+_kiss_fft_guts.h
+kiss_fft_log.h

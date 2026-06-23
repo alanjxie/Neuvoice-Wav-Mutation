@@ -8,7 +8,7 @@ int fft_size = 1024;
 int step_size = 256;
 
 
-void HelperClass::stft_template (std::vector<std::vector<kiss_fft_cpx>>&output_array, kiss_fft_cfg cfg, std::vector<float> input_wav_file) {
+void HelperClass::stft_template (std::vector<std::vector<kiss_fft_cpx>>&output_array, kiss_fft_cfg cfg, const std::vector<float> input_wav_file) {
     //Defining input and output buffers
     std::vector<kiss_fft_cpx> time_input(1024);
     std::vector<kiss_fft_cpx> freq_output(1024);
@@ -17,8 +17,8 @@ void HelperClass::stft_template (std::vector<std::vector<kiss_fft_cpx>>&output_a
     for (int step = 0; step + fft_size <= input_wav_file.size(); step += step_size) {
 
         //populate the input array
-        for (int j = 0; j < 1024 + step_size; ++j) {
-            double raw_sample = input_wav_file[j];
+        for (int j = 0; j < fft_size; ++j) {
+            double raw_sample = input_wav_file[j + step];
             time_input[j].r = raw_sample;
             time_input[j].i = 0.0;
         }
